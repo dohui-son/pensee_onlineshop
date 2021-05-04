@@ -1,63 +1,174 @@
-import React, { Component } from "react";
+import React, { Component, useEffect} from "react";
 import ReactDOM from "react-dom";
 import * as THREE from "three";
 import { Scene } from "three";
+import img from '../material/texture/test.jpg' 
+const DetailQuote = () => {
+  useEffect(()=>{
+    let camera, scene, renderer;
 
-class DetailQuote extends Component {
-  componentDidMount() {
-    var container = document.getElementById("container");
+    let isUserInteracting = false,
+      onPointerDownMouseX = 0, onPointerDownMouseY = 0,
+      lon = 0, onPointerDownLon = 0,
+      lat = 0, onPointerDownLat = 0,
+      phi = 0, theta = 0; 
+    init();
+    animate(); 
+    function init() {
 
-    var camera = new THREE.PerspectiveCamera(
-      75,
-      window.innerWidth / window.innerHeight,
-      1,
-      1100
-    );
-    //camera.position.set(0,0,1000);
+      const container = document.getElementById( 'container' );
+      console.log(container)
+      console.log(window.innerWidth)
+      camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1100 );
 
-    var scene = new THREE.Scene();
+      scene = new THREE.Scene();
 
-    var ambient = new THREE.AmbientLight(0xffffff);
-    scene.add(ambient);
+      const geometry = new THREE.SphereGeometry( 500, 60, 40 );
+      // invert the geometry on the x-axis so that all of the faces point inward
+      geometry.scale( - 1, 1, 1 ); 
+      
+      const texture = new THREE.TextureLoader().load( img); 
+      const material = new THREE.MeshBasicMaterial( { map: texture } );
 
-    var geometry = new THREE.SphereGeometry(500, 60, 40);
-    geometry.scale(-1, 1, 1);
-    var texture = new THREE.TextureLoader().load(
-      "../src/material/texture/quote.jpg"
-    );
-    var material = new THREE.MeshBasicMaterial({ map: texture });
-    var mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
+      const mesh = new THREE.Mesh( geometry, material );
 
-    var renderer = new THREE.WebGL1Renderer();
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    this.mount.appendChild(renderer.domElement);
+      scene.add( mesh );
 
-    //container.style.touchAction = "none";
+      renderer = new THREE.WebGLRenderer();
+      renderer.setPixelRatio( window.devicePixelRatio );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      container.appendChild( renderer.domElement );
 
-    var animate = function () {
-      requestAnimationFrame(animate);
-      var lon = 0;
-      var lat = Math.max(-85, Math.min(85, lat));
-      var phi = THREE.MathUtils.degToRad(90 - lat);
-      var theta = THREE.MathUtils.degToRad(lon++);
+      container.style.touchAction = 'none';
+      container.addEventListener( 'pointerdown', onPointerDown );
 
-      const x = 500 * Math.sin(phi) * Math.cos(theta);
-      const y = 500 * Math.cos(phi);
-      const z = 500 * Math.sin(phi) * Math.sin(theta);
+      document.addEventListener( 'wheel', onDocumentMouseWheel );
 
-      camera.lookAt(x, y, z);
+      //
 
-      renderer.render(scene, camera);
-    };
-    animate();
-  }
-  render() {
-    return <div ref={(ref) => (this.mount = ref)} />;
-  }
+      document.addEventListener( 'dragover', function ( event ) {
+
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+
+      } );
+
+      document.addEventListener( 'dragenter', function () {
+
+        document.body.style.opacity = 0.5;
+
+      } );
+
+      document.addEventListener( 'dragleave', function () {
+
+        document.body.style.opacity = 1;
+
+      } );
+
+      document.addEventListener( 'drop', function ( event ) {
+
+        event.preventDefault();
+
+        const reader = new FileReader();
+        reader.addEventListener( 'load', function ( event ) {
+
+          material.map.image.src = event.target.result;
+          material.map.needsUpdate = true;
+
+        } );
+        reader.readAsDataURL( event.dataTransfer.files[ 0 ] );
+
+        document.body.style.opacity = 1;
+
+      } );
+
+      //
+
+      window.addEventListener( 'resize', onWindowResize );
+
+    }
+
+    function onWindowResize() {
+
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize( window.innerWidth, window.innerHeight );
+
+    }
+
+    function onPointerDown( event ) {
+
+      if ( event.isPrimary === false ) return;
+
+      isUserInteracting = true;
+
+      onPointerDownMouseX = event.clientX;
+      onPointerDownMouseY = event.clientY;
+
+      onPointerDownLon = lon;
+      onPointerDownLat = lat;
+
+      document.addEventListener( 'pointermove', onPointerMove );
+      document.addEventListener( 'pointerup', onPointerUp );
+
+    }
+
+    function onPointerMove( event ) {
+
+      if ( event.isPrimary === false ) return;
+
+      lon = ( onPointerDownMouseX - event.clientX ) * 0.1 + onPointerDownLon;
+      lat = ( event.clientY - onPointerDownMouseY ) * 0.1 + onPointerDownLat;
+
+    }
+
+    function onPointerUp() { 
+      isUserInteracting = false;
+
+      document.removeEventListener( 'pointermove', onPointerMove );
+      document.removeEventListener( 'pointerup', onPointerUp );
+
+    }
+
+    function onDocumentMouseWheel( event ) {
+
+      const fov = camera.fov + event.deltaY * 0.05;
+
+      camera.fov = THREE.MathUtils.clamp( fov, 10, 75 );
+
+      camera.updateProjectionMatrix();
+
+    }
+
+    function animate() {
+
+      requestAnimationFrame( animate );
+      update();
+
+    }
+
+    function update() {
+
+      if ( isUserInteracting === false ) {
+
+        lon += 0.1;
+
+      }
+
+      lat = Math.max( - 85, Math.min( 85, lat ) );
+      phi = THREE.MathUtils.degToRad( 90 - lat );
+      theta = THREE.MathUtils.degToRad( lon );
+
+      const x = 500 * Math.sin( phi ) * Math.cos( theta );
+      const y = 500 * Math.cos( phi );
+      const z = 500 * Math.sin( phi ) * Math.sin( theta );
+
+      camera.lookAt( x, y, z );
+
+      renderer.render( scene, camera );
+    }
+  }, []);
+  return <div id="container"></div> 
 }
-
-const rootElement = document.getElementById("root");
-ReactDOM.render(<DetailQuote />, rootElement);
-export default DetailQuote;
+export default DetailQuote; 
