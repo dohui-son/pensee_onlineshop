@@ -211,7 +211,7 @@ const Detail_3 = () => {
     function render() {
       const time = Date.now();
 
-      lon += 0.15;
+      lon += 0.055;
 
       lat = Math.max(-85, Math.min(85, lat));
       phi = THREE.MathUtils.degToRad(90 - lat);

@@ -17,20 +17,20 @@ import Detail_3 from "./components/Detail_3";
 const App = () => {
   return (
     <div>
-    <Detail_3/>
-    {/* <Detail_2/> */}
-    {/* <Detail_1/> */}
-    {/* <DetailQuote/> */}
-     <div className="global">
-      {/* <Layout> */}
-      {/* <DetailThree />
+      {/* <Detail_3 /> */}
+      {/* <Detail_2/> */}
+      <Detail_1/>
+      {/* <DetailQuote/> */}
+      <div className="global">
+        {/* <Layout> */}
+        {/* <DetailThree />
         <Square /> */}
-      {/* <Route path="/" component={Home} exact={true} />
+        {/* <Route path="/" component={Home} exact={true} />
         <Route path="/auth" component={Auth} />
         <Route path="/mypage" component={MyPage} />
         <Route path="/market" component={Market} />
         <Route path="/sell" component={Sell} /> */}
-      {/* </Layout> */}
+        {/* </Layout> */}
       </div>
     </div>
   );
